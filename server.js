@@ -35,10 +35,18 @@ server.set('view engine', 'ejs');
 //   res.send('Hello Express\n');
 // });
 
-import './serverRender';
+import serverRender from './serverRender';
 
 server.get('/', (req, res) => {
-  res.render('index', {content: '<em>stuff</em>'});
+  serverRender()
+  .then(({initialMarkup, initialData}) => {
+    res.render('index',
+      {
+        initialMarkup,
+        initialData
+      });
+  })
+  .catch(console.error);
 });
 
 server.use('/api', apiRouter);
