@@ -2,6 +2,8 @@ import React from 'react';
 // import axios from 'axios';
 import Header from './Header';
 import ContestList from './ContestList';
+import Contest from './Contest';
+import * as api from '../api';
 
 const pushState = (obj, url) => {
   window.history.pushState(obj, '', url);
@@ -9,15 +11,40 @@ const pushState = (obj, url) => {
 
 class App extends React.Component {
   state = {
-    pageHeader: 'Funny foods',
     contests: this.props.initialContests
   };
   fetchContest = (contestId) => {
     pushState(
-      {currentContestId: contestId},
+      {currentContentId: contestId},
       `/contest/${contestId}`
     );
+    api.fetchContest(contestId).then(contest => {
+      this.setState({
+        currentContentId: contest.id,
+        contests: {
+          ...this.state.contests,
+          [contest.id]: contest
+        }
+      });
+    });
   };
+  currentContest(){
+    return this.state.contests[this.state.currentContentId];
+  }
+  pageHeader(){
+    if(this.state.currentContentId){
+      return this.currentContest().contestName;
+    }
+    return 'Default TITLE :O';
+  }
+  currentContent(){
+    if (this.state.currentContentId) {
+      return <Contest {...this.currentContest()} />;
+    }
+    return <ContestList
+     onContestClick={this.fetchContest}
+     contests={this.state.contests} />;
+  }
   componentDidMount(){
     //not needed since rendering servside
     // axios.get('/api/contests')
@@ -35,10 +62,8 @@ class App extends React.Component {
   render(){
     return (
       <div>
-        <Header message={this.state.pageHeader} />
-        <ContestList
-         onContestClick={this.fetchContest}
-         contests={this.state.contests} />
+        <Header message={this.pageHeader()} />
+        {this.currentContent()}
       </div>
     );
   }
