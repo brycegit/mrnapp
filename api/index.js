@@ -14,7 +14,7 @@ router.get('/contests', (req, res) => {
   res.send({contests: contests});
 });
 
-router.get('/contests/:contestId', (req, res) => {
+router.get('/contest/:contestId', (req, res) => {
   let contest = contests[req.params.contestId];
   contest.description = 'this is a test descrip';
   res.send(contest);

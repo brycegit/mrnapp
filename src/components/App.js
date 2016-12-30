@@ -9,18 +9,23 @@ const pushState = (obj, url) => {
   window.history.pushState(obj, '', url);
 };
 
+const onPopState = handler => {
+  window.onpopstate = handler;
+};
+
 class App extends React.Component {
-  state = {
-    contests: this.props.initialContests
+  static propTypes = {
+    initialData: React.PropTypes.object.isRequired
   };
+  state = this.props.initialData;
   fetchContest = (contestId) => {
     pushState(
-      {currentContentId: contestId},
+      {currentContestId: contestId},
       `/contest/${contestId}`
     );
     api.fetchContest(contestId).then(contest => {
       this.setState({
-        currentContentId: contest.id,
+        currentContestId: contest.id,
         contests: {
           ...this.state.contests,
           [contest.id]: contest
@@ -28,24 +33,42 @@ class App extends React.Component {
       });
     });
   };
+  fetchContestList = () => {
+    pushState(
+      {currentContestId: null},
+      '/'
+    );
+    api.fetchContestList().then(contests => {
+      this.setState({
+        currentContestId: null,
+        contests
+      });
+    });
+  };
   currentContest(){
-    return this.state.contests[this.state.currentContentId];
+    return this.state.contests[this.state.currentContestId];
   }
   pageHeader(){
-    if(this.state.currentContentId){
+    if(this.state.currentContestId){
       return this.currentContest().contestName;
     }
     return 'Default TITLE :O';
   }
   currentContent(){
-    if (this.state.currentContentId) {
-      return <Contest {...this.currentContest()} />;
+    if (this.state.currentContestId) {
+      return <Contest
+                contestListClick={this.fetchContestList}
+                {...this.currentContest()} />;
     }
+    Object.keys(this.state.contests).length <= 1 ? this.fetchContestList() : null;
     return <ContestList
      onContestClick={this.fetchContest}
      contests={this.state.contests} />;
   }
   componentDidMount(){
+    onPopState((event) => {
+      this.setState({currentContestId: event.state.currentContestId || null});
+    });
     //not needed since rendering servside
     // axios.get('/api/contests')
     // .then(resp => {
@@ -54,6 +77,9 @@ class App extends React.Component {
     //   });
     // })
     // .catch(console.error);
+  }
+  componentWillUnmount(){
+    onPopState(null);
   }
   // constructor(props){
   //   super(props);

@@ -72,7 +72,7 @@
 	//   })
 	// .catch(console.error);
 	
-	_reactDom2.default.render(_react2.default.createElement(_App2.default, { initialContests: window.initialData.contests }), document.getElementById('root'));
+	_reactDom2.default.render(_react2.default.createElement(_App2.default, { initialData: window.initialData }), document.getElementById('root'));
 	
 	// import axios from 'axios';
 
@@ -22111,6 +22111,10 @@
 	  window.history.pushState(obj, '', url);
 	};
 	
+	var onPopState = function onPopState(handler) {
+	  window.onpopstate = handler;
+	};
+	
 	var App = function (_React$Component) {
 	  _inherits(App, _React$Component);
 	
@@ -22125,14 +22129,20 @@
 	      args[_key] = arguments[_key];
 	    }
 	
-	    return _ret = (_temp = (_this = _possibleConstructorReturn(this, (_ref = App.__proto__ || Object.getPrototypeOf(App)).call.apply(_ref, [this].concat(args))), _this), _this.state = {
-	      contests: _this.props.initialContests
-	    }, _this.fetchContest = function (contestId) {
-	      pushState({ currentContentId: contestId }, '/contest/' + contestId);
+	    return _ret = (_temp = (_this = _possibleConstructorReturn(this, (_ref = App.__proto__ || Object.getPrototypeOf(App)).call.apply(_ref, [this].concat(args))), _this), _this.state = _this.props.initialData, _this.fetchContest = function (contestId) {
+	      pushState({ currentContestId: contestId }, '/contest/' + contestId);
 	      api.fetchContest(contestId).then(function (contest) {
 	        _this.setState({
-	          currentContentId: contest.id,
+	          currentContestId: contest.id,
 	          contests: _extends({}, _this.state.contests, _defineProperty({}, contest.id, contest))
+	        });
+	      });
+	    }, _this.fetchContestList = function () {
+	      pushState({ currentContestId: null }, '/');
+	      api.fetchContestList().then(function (contests) {
+	        _this.setState({
+	          currentContestId: null,
+	          contests: contests
 	        });
 	      });
 	    }, _temp), _possibleConstructorReturn(_this, _ret);
@@ -22141,12 +22151,12 @@
 	  _createClass(App, [{
 	    key: 'currentContest',
 	    value: function currentContest() {
-	      return this.state.contests[this.state.currentContentId];
+	      return this.state.contests[this.state.currentContestId];
 	    }
 	  }, {
 	    key: 'pageHeader',
 	    value: function pageHeader() {
-	      if (this.state.currentContentId) {
+	      if (this.state.currentContestId) {
 	        return this.currentContest().contestName;
 	      }
 	      return 'Default TITLE :O';
@@ -22154,25 +22164,38 @@
 	  }, {
 	    key: 'currentContent',
 	    value: function currentContent() {
-	      if (this.state.currentContentId) {
-	        return _react2.default.createElement(_Contest2.default, this.currentContest());
+	      if (this.state.currentContestId) {
+	        return _react2.default.createElement(_Contest2.default, _extends({
+	          contestListClick: this.fetchContestList
+	        }, this.currentContest()));
 	      }
+	      Object.keys(this.state.contests).length <= 1 ? this.fetchContestList() : null;
 	      return _react2.default.createElement(_ContestList2.default, {
 	        onContestClick: this.fetchContest,
 	        contests: this.state.contests });
 	    }
 	  }, {
 	    key: 'componentDidMount',
-	    value: function componentDidMount() {}
-	    //not needed since rendering servside
-	    // axios.get('/api/contests')
-	    // .then(resp => {
-	    //   this.setState({
-	    //     contests: resp.data.contests
-	    //   });
-	    // })
-	    // .catch(console.error);
+	    value: function componentDidMount() {
+	      var _this2 = this;
 	
+	      onPopState(function (event) {
+	        _this2.setState({ currentContestId: event.state.currentContestId || null });
+	      });
+	      //not needed since rendering servside
+	      // axios.get('/api/contests')
+	      // .then(resp => {
+	      //   this.setState({
+	      //     contests: resp.data.contests
+	      //   });
+	      // })
+	      // .catch(console.error);
+	    }
+	  }, {
+	    key: 'componentWillUnmount',
+	    value: function componentWillUnmount() {
+	      onPopState(null);
+	    }
 	    // constructor(props){
 	    //   super(props);
 	    //   this.state = {test: 42};
@@ -22193,6 +22216,9 @@
 	  return App;
 	}(_react2.default.Component);
 	
+	App.propTypes = {
+	  initialData: _react2.default.PropTypes.object.isRequired
+	};
 	exports.default = App;
 
 /***/ },
@@ -22361,7 +22387,7 @@
   \***********************************/
 /***/ function(module, exports, __webpack_require__) {
 
-	'use strict';
+	"use strict";
 	
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
@@ -22391,11 +22417,16 @@
 	  }
 	
 	  _createClass(Contest, [{
-	    key: 'render',
+	    key: "render",
 	    value: function render() {
 	      return _react2.default.createElement(
-	        'div',
+	        "div",
 	        null,
+	        _react2.default.createElement(
+	          "div",
+	          { onClick: this.props.contestListClick, className: "link" },
+	          "BACK HOME NOW"
+	        ),
 	        this.props.description
 	      );
 	    }
@@ -22406,7 +22437,8 @@
 	
 	Contest.propTypes = {
 	  description: _react.PropTypes.string,
-	  id: _react.PropTypes.number.isRequired
+	  id: _react.PropTypes.number.isRequired,
+	  contestListClick: _react.PropTypes.func.isRequired
 	};
 	
 	exports.default = Contest;
@@ -22423,7 +22455,7 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	exports.fetchContest = undefined;
+	exports.fetchContestList = exports.fetchContest = undefined;
 	
 	var _axios = __webpack_require__(/*! axios */ 184);
 	
@@ -22432,8 +22464,14 @@
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
 	var fetchContest = exports.fetchContest = function fetchContest(contestId) {
-	  return _axios2.default.get('/api/contests/' + contestId).then(function (resp) {
+	  return _axios2.default.get('/api/contest/' + contestId).then(function (resp) {
 	    return resp.data;
+	  });
+	};
+	
+	var fetchContestList = exports.fetchContestList = function fetchContestList() {
+	  return _axios2.default.get('/api/contests').then(function (resp) {
+	    return resp.data.contests;
 	  });
 	};
 

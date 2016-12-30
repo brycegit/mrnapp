@@ -15,6 +15,6 @@ import App from './components/App';
 // .catch(console.error);
 
 ReactDOM.render(
-  <App initialContests={window.initialData.contests}/>,
+  <App initialData={window.initialData}/>,
   document.getElementById('root')
 );

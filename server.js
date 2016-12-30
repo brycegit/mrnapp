@@ -18,6 +18,7 @@ import config from './config';
 import apiRouter from './api';
 import sassMiddleware from 'node-sass-middleware';
 import path from 'path';
+import serverRender from './serverRender';
 // import fs from 'fs';
 
 import express from 'express';
@@ -35,10 +36,8 @@ server.set('view engine', 'ejs');
 //   res.send('Hello Express\n');
 // });
 
-import serverRender from './serverRender';
-
-server.get('/', (req, res) => {
-  serverRender()
+server.get(['/', '/contest/:contestId'], (req, res) => {
+  serverRender(req.params.contestId)
   .then(({initialMarkup, initialData}) => {
     res.render('index',
       {
